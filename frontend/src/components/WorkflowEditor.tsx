@@ -51,12 +51,20 @@ export default function WorkflowEditor() {
     const handleExport = async () => {
         const workflow: Workflow = {
             id: 'wf-' + Date.now(),
-            nodes: nodes.map((n: Node) => ({
-                id: n.id,
-                type: n.type === 'input' ? 'START' : (n.type === 'output' ? 'END' : 'TASK'),
-                position: n.position,
-                data: n.data,
-            })),
+            nodes: nodes.map((n: Node) => {
+                let nodeType = 'TASK';
+                if (n.type === 'LLM') nodeType = 'LLM';
+                else if (n.type === 'RESULT') nodeType = 'RESULT';
+                else if (n.type === 'input') nodeType = 'START';
+                else if (n.type === 'output') nodeType = 'END';
+
+                return {
+                    id: n.id,
+                    type: nodeType,
+                    position: n.position,
+                    data: n.data,
+                };
+            }),
             edges: edges.map((e: Edge) => ({
                 id: e.id,
                 source: e.source,
@@ -86,7 +94,7 @@ export default function WorkflowEditor() {
                 // Expected format: "vertex [ID] failed: [message]"
                 const match = errorText.match(/vertex (\w+) failed: (.+)/);
                 if (match) {
-                    const [_, nodeId, errorMessage] = match;
+                    const [, nodeId, errorMessage] = match;
                     setNodes((nds) => nds.map(node => {
                         if (node.id === nodeId) {
                             return { ...node, data: { ...node.data, error: errorMessage } };
@@ -99,6 +107,7 @@ export default function WorkflowEditor() {
             }
 
             const result = await response.json();
+            console.log('Backend response:', result);
 
             // Update nodes with results
             setNodes((nds) => nds.map((node) => {
@@ -112,8 +121,8 @@ export default function WorkflowEditor() {
             }));
 
             setSuccess('Workflow executed successfully!');
-        } catch (err: any) {
-            setError(err.message || 'An unknown error occurred');
+        } catch (err) {
+            setError((err as Error).message || 'An unknown error occurred');
         }
     };
 

@@ -16,6 +16,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         if (isOpen) {
             const storedKeys = localStorage.getItem('workflow_api_keys');
             if (storedKeys) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setApiKeys(JSON.parse(storedKeys));
             }
         }

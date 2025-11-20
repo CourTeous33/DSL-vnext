@@ -7,7 +7,7 @@ COPY go.mod ./
 RUN go mod download
 
 COPY . .
-RUN go build -o main .
+RUN go build -o main ./cmd/server/main.go
 
 # Run stage
 FROM alpine:latest

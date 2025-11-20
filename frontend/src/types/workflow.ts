@@ -2,7 +2,7 @@ export type NodeType = 'TASK' | 'START' | 'END';
 
 export interface NodeData {
   label: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface Node {

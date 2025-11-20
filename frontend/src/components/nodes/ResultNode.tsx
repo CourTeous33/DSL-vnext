@@ -40,10 +40,34 @@ const ResultNode = ({ id, data, isConnectable }: NodeProps) => {
                 padding: '8px',
                 borderRadius: '4px',
                 marginTop: '5px',
-                color: '#006064'
+                color: '#006064',
+                position: 'relative'
             }}>
                 {data.result ? (
-                    <span style={{ fontWeight: '500' }}>Output: {data.result}</span>
+                    <>
+                        <span style={{ fontWeight: '500' }}>Output: {data.result}</span>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(data.result);
+                            }}
+                            style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                background: 'rgba(255,255,255,0.8)',
+                                border: '1px solid #006064',
+                                borderRadius: '3px',
+                                cursor: 'pointer',
+                                fontSize: '10px',
+                                padding: '2px 6px',
+                                color: '#006064'
+                            }}
+                            title="Copy to clipboard"
+                        >
+                            Copy
+                        </button>
+                    </>
                 ) : (
                     <span style={{ fontStyle: 'italic', opacity: 0.8 }}>Waiting for output...</span>
                 )}

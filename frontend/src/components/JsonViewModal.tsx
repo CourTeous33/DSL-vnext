@@ -3,7 +3,7 @@ import React from 'react';
 interface JsonViewModalProps {
     isOpen: boolean;
     onClose: () => void;
-    data: any;
+    data: unknown;
 }
 
 const JsonViewModal: React.FC<JsonViewModalProps> = ({ isOpen, onClose, data }) => {

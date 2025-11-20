@@ -3,6 +3,7 @@ import { Handle, Position, type NodeProps, useReactFlow } from 'reactflow';
 
 const LLMNode = ({ id, data, isConnectable }: NodeProps) => {
     const [expanded, setExpanded] = useState(false);
+    const [showDebug, setShowDebug] = useState(false);
     const { setNodes } = useReactFlow();
 
     const handlePromptChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -53,6 +54,20 @@ const LLMNode = ({ id, data, isConnectable }: NodeProps) => {
                         title="Delete Node"
                     >
                         ×
+                    </button>
+                    <button
+                        onClick={() => setShowDebug(!showDebug)}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: showDebug ? '#1890ff' : '#666',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }}
+                        title="Toggle Debug Info"
+                    >
+                        {'{ }'}
                     </button>
                     <button
                         onClick={() => setExpanded(!expanded)}
@@ -143,6 +158,27 @@ const LLMNode = ({ id, data, isConnectable }: NodeProps) => {
                     fontSize: '12px'
                 }}>
                     <strong>Error:</strong> {data.error}
+                </div>
+            )}
+
+            {showDebug && (
+                <div style={{
+                    marginTop: '10px',
+                    padding: '8px',
+                    backgroundColor: '#f6ffed',
+                    border: '1px solid #b7eb8f',
+                    borderRadius: '4px',
+                    color: '#389e0d',
+                    fontSize: '11px',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    maxHeight: '200px',
+                    overflow: 'auto'
+                }}>
+                    <strong>Debug Output:</strong>
+                    <div style={{ marginTop: '4px', fontFamily: 'monospace' }}>
+                        {data.result || 'No result yet'}
+                    </div>
                 </div>
             )}
 
