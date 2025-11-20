@@ -175,7 +175,7 @@ const LLMNode = ({ id, data, isConnectable }: NodeProps) => {
                     maxHeight: '200px',
                     overflow: 'auto'
                 }}>
-                    <strong>Debug Output:</strong>
+                    <strong>Debug Output:</strong> {/* Raw backend result */}
                     <div style={{ marginTop: '4px', fontFamily: 'monospace' }}>
                         {data.result || 'No result yet'}
                     </div>

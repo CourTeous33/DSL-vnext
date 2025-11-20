@@ -65,7 +65,7 @@ const ResultNode = ({ id, data, isConnectable }: NodeProps) => {
                             }}
                             title="Copy to clipboard"
                         >
-                            Copy
+                            Copy {/* Copy to clipboard */}
                         </button>
                     </>
                 ) : (

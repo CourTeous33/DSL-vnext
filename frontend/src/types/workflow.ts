@@ -22,4 +22,5 @@ export interface Workflow {
   id: string;
   nodes: Node[];
   edges: Edge[];
+  config?: Record<string, string>;
 }

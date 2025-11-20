@@ -26,7 +26,12 @@ const initialNodes: Node[] = [
 ];
 const initialEdges: Edge[] = [{ id: 'e1-2', source: '1', target: '2' }];
 
-export default function WorkflowEditor() {
+interface WorkflowEditorProps {
+    loadedWorkflowId: string | null;
+    onWorkflowSaved: () => void;
+}
+
+export default function WorkflowEditor({ loadedWorkflowId, onWorkflowSaved }: WorkflowEditorProps) {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [error, setError] = useState<string | null>(null);
@@ -34,6 +39,29 @@ export default function WorkflowEditor() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isJsonViewOpen, setIsJsonViewOpen] = useState(false);
     const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+    const [workflowName, setWorkflowName] = useState('My Workflow');
+
+    // Load workflow when ID changes
+    React.useEffect(() => {
+        if (loadedWorkflowId) {
+            fetch(`http://localhost:8080/api/workflows?id=${loadedWorkflowId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.definition) {
+                        setNodes(data.definition.nodes || []);
+                        setEdges(data.definition.edges || []);
+                        setWorkflowName(data.name);
+                        setSuccess(`Loaded workflow: ${data.name}`);
+                    }
+                })
+                .catch(err => setError('Failed to load workflow: ' + err.message));
+        } else {
+            // Reset to initial state for new workflow
+            setNodes(initialNodes);
+            setEdges(initialEdges);
+            setWorkflowName('My Workflow');
+        }
+    }, [loadedWorkflowId, setNodes, setEdges]);
 
     // Auto-dismiss success toast
     React.useEffect(() => {
@@ -47,6 +75,46 @@ export default function WorkflowEditor() {
         (params: Connection) => setEdges((eds: Edge[]) => addEdge(params, eds)),
         [setEdges],
     );
+
+    const handleExportJSON = () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ nodes, edges }, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "workflow.json");
+        document.body.appendChild(downloadAnchorNode); // required for firefox
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    };
+
+    const handleSave = async () => {
+        const workflow = {
+            id: loadedWorkflowId || 'wf-' + Date.now(),
+            name: workflowName,
+            definition: {
+                id: loadedWorkflowId || 'wf-' + Date.now(),
+                nodes,
+                edges,
+                config: {} // Will be populated with API keys if needed, but for saving definition we might not want to save keys? 
+                // Actually, we should probably NOT save API keys in the DB for security, or encrypt them. 
+                // For now, let's just save the structure. The keys are injected from localStorage on run.
+            }
+        };
+
+        try {
+            const response = await fetch('http://localhost:8080/api/workflows', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(workflow),
+            });
+
+            if (!response.ok) throw new Error('Failed to save workflow');
+
+            setSuccess('Workflow saved successfully!');
+            onWorkflowSaved();
+        } catch (err) {
+            setError((err as Error).message);
+        }
+    };
 
     const handleExport = async () => {
         const workflow: Workflow = {
@@ -70,7 +138,17 @@ export default function WorkflowEditor() {
                 source: e.source,
                 target: e.target,
             })),
+            config: {},
         };
+
+        // Inject API keys from localStorage
+        const storedKeys = localStorage.getItem('workflow_api_keys');
+        if (storedKeys) {
+            const keys = JSON.parse(storedKeys);
+            if (keys.openai) {
+                workflow.config = { ...workflow.config, openai_api_key: keys.openai };
+            }
+        }
 
         console.log('Exporting workflow:', workflow);
 
@@ -138,15 +216,15 @@ export default function WorkflowEditor() {
     };
 
     return (
-        <div style={{ width: '100vw', height: '100vh' }}>
-            <div style={{ position: 'absolute', zIndex: 10, top: 10, right: 10, display: 'flex', gap: 10 }}>
+        <div style={{ width: '100%', height: '100%' }}>
+            <div style={{ position: 'absolute', zIndex: 10, top: 10, left: 10, display: 'flex', gap: 10 }}>
                 <div style={{ position: 'relative' }}>
                     <button onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}>+ Add Node</button>
                     {isAddMenuOpen && (
                         <div style={{
                             position: 'absolute',
                             top: '100%',
-                            right: 0,
+                            left: 0,
                             marginTop: '5px',
                             backgroundColor: '#1a1a1a',
                             border: '1px solid #333',
@@ -175,6 +253,13 @@ export default function WorkflowEditor() {
                         </div>
                     )}
                 </div>
+                <input
+                    value={workflowName}
+                    onChange={(e) => setWorkflowName(e.target.value)}
+                    style={{ background: '#333', border: '1px solid #555', color: 'white', padding: '5px 10px', borderRadius: '4px' }}
+                />
+                <button onClick={handleSave}>Save</button>
+                <button onClick={handleExportJSON}>Export JSON</button>
                 <button onClick={() => setIsSettingsOpen(true)}>Settings</button>
                 <button onClick={() => setIsJsonViewOpen(true)}>Show JSON</button>
                 <button onClick={handleExport}>Run Workflow</button>
@@ -187,6 +272,7 @@ export default function WorkflowEditor() {
                 onConnect={onConnect}
                 nodeTypes={nodeTypes}
                 fitView
+                fitViewOptions={{ padding: 0.2 }}
                 className="dark"
             >
                 <Controls />

@@ -15,10 +15,17 @@ const (
 	NodeTypeResult NodeType = "RESULT"
 )
 
+// Position represents the x and y coordinates of a node
+type Position struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
 // Node represents a single step in the workflow
 type Node struct {
 	ID       string                 `json:"id"`
 	Type     NodeType               `json:"type"`
+	Position Position               `json:"position"`
 	Data     map[string]interface{} `json:"data"` // React Flow uses 'data' object
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -39,9 +46,10 @@ type Edge struct {
 
 // Workflow represents the entire graph
 type Workflow struct {
-	ID    string `json:"id"`
-	Nodes []Node `json:"nodes"`
-	Edges []Edge `json:"edges"`
+	ID     string            `json:"id"`
+	Nodes  []Node            `json:"nodes"`
+	Edges  []Edge            `json:"edges"`
+	Config map[string]string `json:"config,omitempty"`
 }
 
 // ExecutionStatus represents the state of a node execution

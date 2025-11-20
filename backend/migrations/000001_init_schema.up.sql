@@ -37,4 +37,14 @@ CREATE TABLE IF NOT EXISTS llm_memories (
     -- embedding vector(1536), -- Commented out until pgvector is set up
     metadata JSONB,
     created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Saved Workflows
+CREATE TABLE IF NOT EXISTS workflows (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    definition JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -1,19 +1,21 @@
 package nodes
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"workflow-platform/internal/engine"
+	"workflow-platform/internal/llm"
 )
 
 // LLMVertex simulates an LLM invocation
-type LLMVertex struct{}
+type LLMVertex struct {
+	Client llm.Client
+}
 
 func (v *LLMVertex) Compute(ctx *engine.Context, messages []engine.Message) error {
 	// 1. Check if we have inputs (either from trigger or previous nodes)
-	// For simplicity, if it's step 0, we run. If > 0, we run if we have messages.
-
 	fmt.Printf("[LLMVertex %s] Computing at step %d. Messages: %d\n", ctx.NodeID, ctx.Step, len(messages))
 
 	// Simulate processing inputs to form a prompt
@@ -39,34 +41,31 @@ func (v *LLMVertex) Compute(ctx *engine.Context, messages []engine.Message) erro
 		}
 	}
 
-	// Simulate LLM call
-	time.Sleep(500 * time.Millisecond)
-
 	// Combine prompt and inputs
 	fullInput := prompt
 	if inputData != "" {
 		fullInput = fmt.Sprintf("%s\nContext: %s", prompt, inputData)
 	}
 
-	result := fmt.Sprintf("LLM Response to: '%s'", fullInput)
 	if fullInput == "" {
-		result = "LLM Response (No prompt or input)"
+		fullInput = "Hello" // Default prompt if nothing provided
 	}
 
-	// Simulate error if prompt is "error"
-	if inputData == "error " || inputData == "error" { // inputData has a trailing space from the loop
-		return fmt.Errorf("simulated LLM failure")
+	// Call LLM
+	fmt.Printf("[LLMVertex %s] Calling LLM with prompt: %s\n", ctx.NodeID, fullInput)
+	result, err := v.Client.Generate(context.Background(), fullInput)
+	if err != nil {
+		return fmt.Errorf("LLM generation failed: %w", err)
 	}
 
 	// Store result in ExecutionContext for frontend debugging
 	ctx.Execution.Results[ctx.NodeID] = map[string]interface{}{
 		"result":       result,
-		"debug_prompt": prompt,
+		"debug_prompt": fullInput,
 		"timestamp":    time.Now().Format(time.RFC3339),
 	}
 
 	// Send result to all children
-	// We need to find outgoing edges from this node
 	for _, edge := range ctx.Workflow.Edges {
 		if edge.Source == ctx.NodeID {
 			ctx.SendMessage(edge.Target, map[string]interface{}{
